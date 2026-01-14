@@ -1,0 +1,244 @@
+/* client/src/index.css */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #020617; /* a juego con el tema oscuro morado */
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Estilos para el scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020617;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4c1d95;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6d28d9;
+}
+
+/* Estilos para los enlaces */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Estilos para las imágenes responsivas */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Clases de utilidad */
+.text-center {
+  text-align: center;
+}
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
+.mt-5 { margin-top: 3rem; }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }
+.mb-5 { margin-bottom: 3rem; }
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes gl-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.gl-page-enter {
+  animation: gl-page-enter 320ms ease-out both;
+}
+
+@keyframes gl-logo-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes gl-neon-pulse {
+  0% {
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.25), 0 0 18px rgba(99, 102, 241, 0.18);
+  }
+  100% {
+    text-shadow: 0 0 14px rgba(168, 85, 247, 0.55), 0 0 28px rgba(99, 102, 241, 0.28);
+  }
+}
+
+@keyframes gl-float {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes gl-glitch {
+  0% {
+    text-shadow: 0.6px 0 rgba(99, 102, 241, 0.55), -0.6px 0 rgba(236, 72, 153, 0.55);
+    transform: translate(0);
+  }
+  20% {
+    text-shadow: 1.1px 0 rgba(99, 102, 241, 0.65), -1.1px 0 rgba(236, 72, 153, 0.55);
+    transform: translate(-0.5px, 0.2px);
+  }
+  40% {
+    text-shadow: 0.6px 0 rgba(99, 102, 241, 0.55), -0.6px 0 rgba(236, 72, 153, 0.55);
+    transform: translate(0.4px, -0.2px);
+  }
+  60% {
+    text-shadow: 1.3px 0 rgba(99, 102, 241, 0.75), -1.3px 0 rgba(236, 72, 153, 0.6);
+    transform: translate(0.2px, 0.1px);
+  }
+  100% {
+    text-shadow: 0.6px 0 rgba(99, 102, 241, 0.55), -0.6px 0 rgba(236, 72, 153, 0.55);
+    transform: translate(0);
+  }
+}
+
+@keyframes gl-bg-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(0, -14px, 0) scale(1.03);
+    opacity: 0.95;
+  }
+}
+
+@keyframes gl-scan {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(24px);
+  }
+}
+
+.gl-app-shell {
+  position: relative;
+  z-index: 0;
+}
+
+.gl-app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(168, 85, 247, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 85% 82%, rgba(99, 102, 241, 0.16) 0%, transparent 52%),
+    radial-gradient(circle at 55% 40%, rgba(236, 72, 153, 0.08) 0%, transparent 58%);
+  filter: blur(26px);
+  opacity: 0.9;
+  animation: gl-bg-drift 14s ease-in-out infinite alternate;
+  z-index: -1;
+}
+
+.gl-app-shell::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 2px,
+      transparent 6px
+    ),
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.06) 1px, transparent 0);
+  background-size: 100% 100%, 26px 26px;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  animation: gl-scan 8s linear infinite;
+  z-index: -1;
+}
+
+.gl-logo-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: gl-logo-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.gl-logo-text:hover {
+  animation: gl-logo-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    gl-glitch 900ms steps(2, end) infinite;
+}
+
+.gl-glitch-hover:hover {
+  animation: gl-glitch 900ms steps(2, end) infinite;
+}
+
+.gl-neon-text {
+  animation: gl-neon-pulse 3.4s ease-in-out infinite alternate;
+}
+
+.gl-float {
+  animation: gl-float 6s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gl-page-enter,
+  .gl-logo-text,
+  .gl-neon-text,
+  .gl-float {
+    animation: none !important;
+  }
+
+  .gl-app-shell::before,
+  .gl-app-shell::after {
+    animation: none !important;
+  }
+}
