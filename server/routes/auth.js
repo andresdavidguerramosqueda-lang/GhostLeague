@@ -508,7 +508,8 @@ router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
     }
 
     const publicPath = `/uploads/avatars/${req.file.filename}`;
-    user.avatar = publicPath;
+    const fullUrl = `${req.protocol}://${req.get('host')}${publicPath}`;
+    user.avatar = fullUrl;
     await user.save();
 
     return res.json({
@@ -555,7 +556,8 @@ router.post('/banner', auth, uploadBanner.single('banner'), async (req, res) => 
     }
 
     const publicPath = `/uploads/banners/${req.file.filename}`;
-    user.banner = publicPath;
+    const fullUrl = `${req.protocol}://${req.get('host')}${publicPath}`;
+    user.banner = fullUrl;
     await user.save();
 
     return res.json({
