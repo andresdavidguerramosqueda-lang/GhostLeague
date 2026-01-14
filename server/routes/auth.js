@@ -454,4 +454,106 @@ router.post('/reset-password', validatePassword, async (req, res) => {
   }
 });
 
+// @route   PUT api/auth/profile
+// @desc    Actualizar datos básicos de perfil (sin avatar)
+// @access  Private
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { username, country, favoriteGame, bio, showEmailOnProfile, socialSpotify, socialTiktok, socialTwitch, socialDiscord, socialInstagram, socialX, socialYoutube } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (username) user.username = username;
+    if (country !== undefined) user.country = country;
+    if (favoriteGame !== undefined) user.favoriteGame = favoriteGame;
+    if (bio !== undefined) user.bio = bio;
+    if (showEmailOnProfile !== undefined) user.showEmailOnProfile = !!showEmailOnProfile;
+    if (socialSpotify !== undefined) user.socialSpotify = socialSpotify;
+    if (socialTiktok !== undefined) user.socialTiktok = socialTiktok;
+    if (socialTwitch !== undefined) user.socialTwitch = socialTwitch;
+    if (socialDiscord !== undefined) user.socialDiscord = socialDiscord;
+    if (socialInstagram !== undefined) user.socialInstagram = socialInstagram;
+    if (socialX !== undefined) user.socialX = socialX;
+    if (socialYoutube !== undefined) user.socialYoutube = socialYoutube;
+
+    await user.save();
+
+    return res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        showEmailOnProfile: user.showEmailOnProfile,
+        role: user.role,
+        avatar: user.avatar,
+        banner: user.banner,
+        country: user.country,
+        favoriteGame: user.favoriteGame,
+        bio: user.bio,
+        socialSpotify: user.socialSpotify,
+        socialTiktok: user.socialTiktok,
+        socialTwitch: user.socialTwitch,
+        socialDiscord: user.socialDiscord,
+        socialInstagram: user.socialInstagram,
+        socialX: user.socialX,
+        socialYoutube: user.socialYoutube,
+        competitive: user.competitive,
+      }
+    });
+  } catch (err) {
+    console.error('Error actualizando perfil:', err);
+    res.status(500).json({ message: 'Error del servidor' });
+  }
+});
+
+// @route   POST api/auth/avatar
+// @desc    Subir foto de perfil (avatar)
+// @access  Private
+router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No se envió ningún archivo' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const publicPath = `/uploads/avatars/${req.file.filename}`;
+    user.avatar = publicPath;
+    await user.save();
+
+    return res.json({
+      message: 'Avatar actualizado correctamente',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        showEmailOnProfile: user.showEmailOnProfile,
+        role: user.role,
+        avatar: user.avatar,
+        banner: user.banner,
+        country: user.country,
+        favoriteGame: user.favoriteGame,
+        bio: user.bio,
+        socialSpotify: user.socialSpotify,
+        socialTiktok: user.socialTiktok,
+        socialTwitch: user.socialTwitch,
+        socialDiscord: user.socialDiscord,
+        socialInstagram: user.socialInstagram,
+        socialX: user.socialX,
+        socialYoutube: user.socialYoutube,
+        competitive: user.competitive,
+      }
+    });
+  } catch (error) {
+    console.error('Error al subir avatar:', error);
+    res.status(500).json({ message: 'Error del servidor' });
+  }
+});
+
 module.exports = router;
