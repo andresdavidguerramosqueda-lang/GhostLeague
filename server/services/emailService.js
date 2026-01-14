@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const ResendEmailService = require('./resendEmailService');
 
 // Configuración del transporter (usa tus credenciales reales)
 const transporter = nodemailer.createTransport({
@@ -11,6 +12,9 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS
   }
 });
+
+// Instancia de Resend
+const resendService = new ResendEmailService();
 
 // Verificar configuración de email
 const isEmailConfigured = () => {
@@ -24,7 +28,14 @@ const generateResetToken = () => {
 
 // Enviar correo de restablecimiento
 const sendPasswordResetEmail = async (userEmail, resetToken) => {
-  // Verificar si el email está configurado
+  // Usar Resend si está configurado
+  if (process.env.EMAIL_PROVIDER === 'resend' || process.env.RESEND_API_KEY) {
+    console.log('📧 Enviando email de reset password con Resend');
+    const result = await resendService.sendPasswordResetEmail(userEmail, resetToken);
+    return result.success;
+  }
+
+  // Verificar si el email SMTP está configurado
   if (!isEmailConfigured()) {
     console.warn('⚠️  Email no configurado. Simulando envío a:', userEmail);
     console.log('🔗 Enlace de restablecimiento:', `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`);

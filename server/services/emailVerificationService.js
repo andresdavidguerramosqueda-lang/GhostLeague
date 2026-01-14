@@ -1,10 +1,12 @@
 const nodemailer = require('nodemailer');
 const EmailVerificationCode = require('../models/EmailVerificationCode');
 const User = require('../models/User');
+const ResendEmailService = require('./resendEmailService');
 
 class EmailVerificationService {
   constructor() {
     this.transporter = null;
+    this.resendService = new ResendEmailService();
     this.initializeTransporter();
   }
 
@@ -106,6 +108,13 @@ class EmailVerificationService {
    * @returns {Promise<Object>} Resultado del envío
    */
   async sendVerificationEmail(to, code) {
+    // Usar Resend si está configurado, sino fallback a SMTP
+    if (process.env.EMAIL_PROVIDER === 'resend' || process.env.RESEND_API_KEY) {
+      console.log('📧 Enviando email de verificación con Resend');
+      return await this.resendService.sendVerificationEmail(to, code);
+    }
+
+    // Fallback a SMTP tradicional
     if (!this.transporter) {
       return {
         success: false,
@@ -150,6 +159,13 @@ class EmailVerificationService {
   }
 
   async sendWelcomeEmail(to, username) {
+    // Usar Resend si está configurado, sino fallback a SMTP
+    if (process.env.EMAIL_PROVIDER === 'resend' || process.env.RESEND_API_KEY) {
+      console.log('📧 Enviando email de bienvenida con Resend');
+      return await this.resendService.sendWelcomeEmail(to, username);
+    }
+
+    // Fallback a SMTP tradicional
     if (!this.transporter) {
       return {
         success: false,
