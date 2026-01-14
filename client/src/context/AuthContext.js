@@ -34,12 +34,13 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setError(null);
-      const response = await api.post('/registration/initiate', userData);
+      const response = await api.post('/auth/register', userData);
       return {
         success: true,
-        requiresVerification: true,
+        requiresVerification: response.data.requiresEmailVerification,
         email: response.data.email,
-        previewUrl: response.data.previewUrl
+        previewUrl: response.data.previewUrl,
+        user: response.data.user
       };
     } catch (error) {
       console.error('Error al registrarse:', error);
@@ -67,6 +68,27 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error al completar el registro:', error);
       const errorMessage = error.response?.data?.message || 'Error al completar el registro';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const verifyEmail = async (email, code) => {
+    try {
+      setError(null);
+      const response = await api.post('/registration/verify-email', {
+        email: (email || '').trim().toLowerCase(),
+        code: (code || '').trim()
+      });
+
+      const { user, token } = response.data;
+      localStorage.setItem('token', token);
+      setCurrentUser(user);
+
+      return { success: true, user, token };
+    } catch (error) {
+      console.error('Error al verificar email:', error);
+      const errorMessage = error.response?.data?.message || 'Error al verificar email';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -125,6 +147,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     completeRegistration,
+    verifyEmail,
     resendVerificationCode,
     logout,
     refreshUser,
