@@ -180,15 +180,6 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Verificar si el correo electrónico está verificado
-    if (!user.emailVerified) {
-      return res.status(403).json({
-        message: 'Debes verificar tu correo electrónico antes de iniciar sesión',
-        requiresEmailVerification: true,
-        email: user.email
-      });
-    }
-
     // Create and return JWT
     const payload = {
       userId: user.id,
