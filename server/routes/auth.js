@@ -556,4 +556,51 @@ router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
   }
 });
 
+// @route   POST api/auth/banner
+// @desc    Subir banner de perfil
+// @access  Private
+router.post('/banner', auth, uploadBanner.single('banner'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No se envió ningún archivo' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const publicPath = `/uploads/banners/${req.file.filename}`;
+    user.banner = publicPath;
+    await user.save();
+
+    return res.json({
+      message: 'Banner actualizado correctamente',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        showEmailOnProfile: user.showEmailOnProfile,
+        role: user.role,
+        avatar: user.avatar,
+        banner: user.banner,
+        country: user.country,
+        favoriteGame: user.favoriteGame,
+        bio: user.bio,
+        socialSpotify: user.socialSpotify,
+        socialTiktok: user.socialTiktok,
+        socialTwitch: user.socialTwitch,
+        socialDiscord: user.socialDiscord,
+        socialInstagram: user.socialInstagram,
+        socialX: user.socialX,
+        socialYoutube: user.socialYoutube,
+        competitive: user.competitive,
+      }
+    });
+  } catch (error) {
+    console.error('Error al subir banner:', error);
+    res.status(500).json({ message: 'Error del servidor' });
+  }
+});
+
 module.exports = router;
