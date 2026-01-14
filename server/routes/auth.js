@@ -74,30 +74,10 @@ router.post('/register', registrationLimiter, async (req, res) => {
   const { username, email, password } = req.body;
 
   try {
-    // Validación completa del correo electrónico
-    const emailValidation = await EmailValidationService.validateForRegistration(email);
-    
-    if (!emailValidation.isValid) {
+    // Validación básica de email
+    if (!email || !email.includes('@')) {
       return res.status(400).json({ 
-        message: 'Correo electrónico inválido',
-        details: emailValidation.messages,
-        risk: emailValidation.risk
-      });
-    }
-
-    if (emailValidation.isTemporary) {
-      return res.status(400).json({ 
-        message: 'No se permiten correos electrónicos temporales',
-        details: emailValidation.messages,
-        risk: emailValidation.risk
-      });
-    }
-
-    if (!emailValidation.canRegister) {
-      return res.status(400).json({ 
-        message: 'El correo electrónico ya está registrado',
-        details: emailValidation.messages,
-        verificationMethod: emailValidation.verificationMethod
+        message: 'Correo electrónico inválido'
       });
     }
 
@@ -107,7 +87,13 @@ router.post('/register', registrationLimiter, async (req, res) => {
       return res.status(400).json({ message: 'El nombre de usuario ya está en uso' });
     }
 
-    // Create new user (sin verificar correo)
+    // Check if email already exists
+    const existingEmail = await User.findOne({ email: email.trim().toLowerCase() });
+    if (existingEmail) {
+      return res.status(400).json({ message: 'El correo electrónico ya está registrado' });
+    }
+
+    // Create new user (verificado automáticamente sin email)
     const playerId = await generateUniquePlayerId(User);
     
     const user = new User({
@@ -115,42 +101,40 @@ router.post('/register', registrationLimiter, async (req, res) => {
       email: email.trim().toLowerCase(),
       password,
       role: 'user', // Default role
-      emailVerified: false, // Requerir verificación de correo
-      emailValidationMethod: emailValidation.verificationMethod,
+      emailVerified: true, // Verificado automáticamente
+      emailValidationMethod: 'disabled',
       registrationDate: new Date(),
       playerId: playerId // Generar playerId único #XRGH91F
     });
 
     await user.save();
 
-    // Enviar código de verificación por correo
-    const EmailVerificationService = require('../services/emailVerificationService');
-    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
-    const userAgent = req.headers['user-agent'];
-    
-    const emailResult = await EmailVerificationService.sendVerificationCode(
-      email.trim().toLowerCase(),
-      ipAddress,
-      userAgent
-    );
+    // Crear JWT inmediatamente (sin verificación)
+    const payload = {
+      userId: user.id,
+      role: user.role
+    };
 
-    console.log('📧 Código de verificación enviado:', emailResult.success ? '✅' : '❌');
-
-    // Retornar respuesta indicando que se requiere verificación
-    res.status(201).json({
-      message: 'Usuario registrado exitosamente. Por favor, verifica tu correo electrónico para completar el registro.',
-      requiresEmailVerification: true,
-      email: email.trim().toLowerCase(),
-      previewUrl: emailResult.previewUrl, // Solo en desarrollo
-      user: {
-        id: user.id,
-        username: user.username,
-        playerId: user.playerId,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        role: user.role
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' },
+      (err, token) => {
+        if (err) throw err;
+        res.status(201).json({ 
+          message: 'Usuario registrado exitosamente',
+          token,
+          user: {
+            id: user.id,
+            username: user.username,
+            playerId: user.playerId,
+            email: user.email,
+            emailVerified: user.emailVerified,
+            role: user.role
+          }
+        });
       }
-    });
+    );
 
   } catch (error) {
     console.error('Error en registro:', error);

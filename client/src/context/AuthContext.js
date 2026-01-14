@@ -35,12 +35,16 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await api.post('/auth/register', userData);
+      
+      // Guardar token y usuario automáticamente
+      const { user, token } = response.data;
+      localStorage.setItem('token', token);
+      setCurrentUser(user);
+      
       return {
         success: true,
-        requiresVerification: response.data.requiresEmailVerification,
-        email: response.data.email,
-        previewUrl: response.data.previewUrl,
-        user: response.data.user
+        user,
+        token
       };
     } catch (error) {
       console.error('Error al registrarse:', error);
