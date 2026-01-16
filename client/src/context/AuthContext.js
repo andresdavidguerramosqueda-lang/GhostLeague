@@ -15,9 +15,21 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const login = async (email, password) => {
+  const clearError = () => setError(null);
+
+  const login = async (emailOrCredentials, passwordMaybe) => {
     try {
       setError(null);
+
+      const email =
+        typeof emailOrCredentials === 'object' && emailOrCredentials !== null
+          ? emailOrCredentials.email
+          : emailOrCredentials;
+      const password =
+        typeof emailOrCredentials === 'object' && emailOrCredentials !== null
+          ? emailOrCredentials.password
+          : passwordMaybe;
+
       const response = await api.post('/auth/login', { email, password });
       const { user, token } = response.data;
       localStorage.setItem('token', token);
@@ -44,7 +56,9 @@ export const AuthProvider = ({ children }) => {
       return {
         success: true,
         user,
-        token
+        token,
+        requiresVerification: false,
+        email: user?.email
       };
     } catch (error) {
       console.error('Error al registrarse:', error);
@@ -148,6 +162,7 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     isAuthenticated: !!currentUser,
     isAdmin,
+    isLoading: loading,
     login,
     register,
     completeRegistration,
@@ -155,6 +170,7 @@ export const AuthProvider = ({ children }) => {
     resendVerificationCode,
     logout,
     refreshUser,
+    clearError,
     error,
     loading
   };

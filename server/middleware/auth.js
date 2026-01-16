@@ -10,15 +10,24 @@ const auth = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        // Actualizar lastSeen e isOnline en cada petición autenticada
-        const user = await User.findByIdAndUpdate(
-            decoded.userId,
-            {
-                isOnline: true,
-                lastSeen: new Date(),
-            },
-            { new: true }
-        ).select('-password');
+        const now = new Date();
+        const thresholdMs = Number(process.env.LAST_SEEN_UPDATE_MS) || 5 * 60 * 1000;
+        const existingUser = await User.findById(decoded.userId).select('-password');
+        if (!existingUser) {
+            return res.status(401).json({ message: 'Token is not valid' });
+        }
+
+        const lastSeen = existingUser.lastSeen ? new Date(existingUser.lastSeen) : null;
+        const shouldUpdateLastSeen = !lastSeen || (now.getTime() - lastSeen.getTime() >= thresholdMs);
+        if (shouldUpdateLastSeen || existingUser.isOnline !== true) {
+            await User.updateOne(
+                { _id: existingUser._id },
+                { $set: { isOnline: true, lastSeen: now } }
+            );
+            existingUser.isOnline = true;
+            existingUser.lastSeen = now;
+        }
+        const user = existingUser;
 
         if (!user) {
             return res.status(401).json({ message: 'Token is not valid' });

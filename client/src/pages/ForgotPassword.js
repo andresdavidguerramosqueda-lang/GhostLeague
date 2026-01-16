@@ -22,6 +22,8 @@ const ForgotPassword = () => {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
+  const emailDisabled = String(process.env.REACT_APP_EMAIL_DISABLED).toLowerCase() === 'true';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -51,6 +53,39 @@ const ForgotPassword = () => {
       setLoading(false);
     }
   };
+
+  if (emailDisabled) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Paper
+          sx={{
+            p: 4,
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 3
+          }}
+        >
+          <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+            La recuperación de contraseña está deshabilitada temporalmente.
+          </Alert>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/login')}
+            sx={{
+              borderColor: 'rgba(168, 85, 247, 0.5)',
+              color: '#a855f7',
+              '&:hover': {
+                borderColor: '#a855f7',
+                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+              },
+            }}
+          >
+            Volver al inicio de sesión
+          </Button>
+        </Paper>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>

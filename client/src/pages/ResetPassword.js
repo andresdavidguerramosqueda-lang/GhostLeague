@@ -25,6 +25,8 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const token = searchParams.get('token');
 
+  const emailDisabled = String(process.env.REACT_APP_EMAIL_DISABLED).toLowerCase() === 'true';
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +40,13 @@ const ResetPassword = () => {
 
   // Validar token al cargar la página
   useEffect(() => {
+    if (emailDisabled) {
+      setValidatingToken(false);
+      setTokenValid(false);
+      setError('La recuperación de contraseña está deshabilitada temporalmente.');
+      return;
+    }
+
     const validateToken = async () => {
       if (!token) {
         setError('Token no proporcionado');

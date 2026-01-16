@@ -5,6 +5,7 @@ const fs = require('fs');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { v2: cloudinary } = require('cloudinary');
 const User = require('../models/User');
 const PasswordResetToken = require('../models/PasswordResetToken');
 const { sendPasswordResetEmail, generateResetToken } = require('../services/emailService');
@@ -13,6 +14,33 @@ const { passwordResetLimiter, registrationLimiter, loginLimiter } = require('../
 const { generateUniquePlayerId } = require('../utils/playerIdGenerator');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
+
+const isCloudinaryConfigured = () => {
+  return !!(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
+};
+
+const configureCloudinary = () => {
+  if (!isCloudinaryConfigured()) return;
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+};
+
+const uploadFileToCloudinary = async ({ filePath, folder, publicId }) => {
+  configureCloudinary();
+  return cloudinary.uploader.upload(filePath, {
+    folder,
+    public_id: publicId,
+    overwrite: true,
+    resource_type: 'image',
+  });
+};
 
 // Configuración de subida de archivos para avatar
 const uploadsDir = path.join(__dirname, '..', 'uploads', 'avatars');
@@ -39,9 +67,8 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) {
-      return cb(new Error('Solo se permiten imágenes'));
-    }
+    const allowed = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+    if (!allowed.has(file.mimetype)) return cb(new Error('Solo se permiten imágenes (jpeg, png, webp, gif)'));
     cb(null, true);
   },
 });
@@ -60,9 +87,8 @@ const uploadBanner = multer({
   storage: bannerStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) {
-      return cb(new Error('Solo se permiten imágenes'));
-    }
+    const allowed = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+    if (!allowed.has(file.mimetype)) return cb(new Error('Solo se permiten imágenes (jpeg, png, webp, gif)'));
     cb(null, true);
   },
 });
@@ -273,6 +299,10 @@ const validatePassword = (req, res, next) => {
 // 1. Formulario para solicitar restablecimiento (POST)
 router.post('/forgot-password', passwordResetLimiter, validateEmail, async (req, res) => {
   try {
+    if (String(process.env.EMAIL_DISABLED).toLowerCase() === 'true') {
+      return res.status(503).json({ message: 'La recuperación de contraseña está deshabilitada temporalmente.' });
+    }
+
     console.log('📧 Iniciando proceso de forgot-password');
     console.log('Email recibido:', req.body.email);
     
@@ -347,6 +377,10 @@ router.post('/forgot-password', passwordResetLimiter, validateEmail, async (req,
 // 2. Validar token antes de mostrar formulario
 router.get('/validate-reset-token/:token', async (req, res) => {
   try {
+    if (String(process.env.EMAIL_DISABLED).toLowerCase() === 'true') {
+      return res.status(503).json({ valid: false, message: 'La recuperación de contraseña está deshabilitada temporalmente.' });
+    }
+
     const { token } = req.params;
     
     // Usar el método mejorado del modelo
@@ -384,6 +418,10 @@ router.get('/validate-reset-token/:token', async (req, res) => {
 // 3. Restablecer contraseña (POST)
 router.post('/reset-password', validatePassword, async (req, res) => {
   try {
+    if (String(process.env.EMAIL_DISABLED).toLowerCase() === 'true') {
+      return res.status(503).json({ message: 'La recuperación de contraseña está deshabilitada temporalmente.' });
+    }
+
     const { token, password } = req.body;
     
     if (!token) {
@@ -507,9 +545,29 @@ router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const publicPath = `/uploads/avatars/${req.file.filename}`;
-    const fullUrl = `${req.protocol}://${req.get('host')}${publicPath}`;
-    user.avatar = fullUrl;
+    if (isCloudinaryConfigured()) {
+      const folder = process.env.CLOUDINARY_FOLDER ? `${process.env.CLOUDINARY_FOLDER}/avatars` : 'ghostleague/avatars';
+      const publicId = `user_${user._id}_avatar`;
+      const result = await uploadFileToCloudinary({
+        filePath: req.file.path,
+        folder,
+        publicId,
+      });
+
+      user.avatar = result.secure_url;
+
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (e) {
+        // ignore
+      }
+    } else {
+      const publicPath = `/uploads/avatars/${req.file.filename}`;
+      const forwardedProto = (req.headers['x-forwarded-proto'] || '').toString().split(',')[0].trim();
+      const protocol = forwardedProto || req.protocol;
+      const fullUrl = `${protocol}://${req.get('host')}${publicPath}`;
+      user.avatar = fullUrl;
+    }
     await user.save();
 
     return res.json({
@@ -555,9 +613,29 @@ router.post('/banner', auth, uploadBanner.single('banner'), async (req, res) => 
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const publicPath = `/uploads/banners/${req.file.filename}`;
-    const fullUrl = `${req.protocol}://${req.get('host')}${publicPath}`;
-    user.banner = fullUrl;
+    if (isCloudinaryConfigured()) {
+      const folder = process.env.CLOUDINARY_FOLDER ? `${process.env.CLOUDINARY_FOLDER}/banners` : 'ghostleague/banners';
+      const publicId = `user_${user._id}_banner`;
+      const result = await uploadFileToCloudinary({
+        filePath: req.file.path,
+        folder,
+        publicId,
+      });
+
+      user.banner = result.secure_url;
+
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (e) {
+        // ignore
+      }
+    } else {
+      const publicPath = `/uploads/banners/${req.file.filename}`;
+      const forwardedProto = (req.headers['x-forwarded-proto'] || '').toString().split(',')[0].trim();
+      const protocol = forwardedProto || req.protocol;
+      const fullUrl = `${protocol}://${req.get('host')}${publicPath}`;
+      user.banner = fullUrl;
+    }
     await user.save();
 
     return res.json({
