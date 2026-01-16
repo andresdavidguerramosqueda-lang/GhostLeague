@@ -17,6 +17,8 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   EmojiEvents as TrophyIcon,
@@ -39,6 +41,8 @@ const resolveUploadUrl = (fileBase, value) => {
 };
 
 const Ranking = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -284,17 +288,17 @@ const Ranking = () => {
           <Chip size="small" label={`${rows.length} jugadores`} />
         </Box>
 
-        <TableContainer>
-          <Table size="small">
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: { xs: 0, sm: 720 } }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 900 }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 900 }}>Jugador</TableCell>
-                {tab === 0 ? <TableCell sx={{ fontWeight: 900 }}>Juego</TableCell> : null}
-                <TableCell sx={{ fontWeight: 900 }}>Nivel</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>Puntos</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>W-L</TableCell>
-                {tab !== 0 ? <TableCell sx={{ fontWeight: 900 }}>Torneos</TableCell> : null}
+                {!isMobile && tab === 0 ? <TableCell sx={{ fontWeight: 900 }}>Juego</TableCell> : null}
+                {!isMobile ? <TableCell sx={{ fontWeight: 900 }}>Nivel</TableCell> : null}
+                {!isMobile ? <TableCell sx={{ fontWeight: 900 }}>Puntos</TableCell> : null}
+                {!isMobile ? <TableCell sx={{ fontWeight: 900 }}>W-L</TableCell> : null}
+                {!isMobile && tab !== 0 ? <TableCell sx={{ fontWeight: 900 }}>Torneos</TableCell> : null}
                 <TableCell sx={{ fontWeight: 900 }}>Estado</TableCell>
               </TableRow>
             </TableHead>
@@ -311,24 +315,28 @@ const Ranking = () => {
                           <Skeleton width={140} />
                         </Box>
                       </TableCell>
-                      {tab === 0 ? (
+                      {!isMobile && tab === 0 ? (
                         <TableCell>
                           <Skeleton width={90} />
                         </TableCell>
                       ) : null}
-                      <TableCell>
-                        <Skeleton width={60} />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton width={70} />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton width={70} />
-                      </TableCell>
-                      {tab !== 0 ? (
-                        <TableCell>
-                          <Skeleton width={60} />
-                        </TableCell>
+                      {!isMobile ? (
+                        <>
+                          <TableCell>
+                            <Skeleton width={60} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton width={70} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton width={70} />
+                          </TableCell>
+                          {tab !== 0 ? (
+                            <TableCell>
+                              <Skeleton width={60} />
+                            </TableCell>
+                          ) : null}
+                        </>
                       ) : null}
                       <TableCell>
                         <Skeleton width={60} />
@@ -398,19 +406,27 @@ const Ranking = () => {
                                   {player.playerId}
                                 </Typography>
                               )}
-                              <Typography variant="caption" color="text.secondary" noWrap>
-                                {safeNumber(stats.wins, 0)}W • {safeNumber(stats.losses, 0)}L
-                              </Typography>
+                              {isMobile ? (
+                                <Typography variant="caption" color="text.secondary" noWrap>
+                                  Nivel {safeNumber(stats.level, 1)} • {safeNumber(stats.points, 0).toFixed(2)} pts • {safeNumber(stats.wins, 0)}W-{safeNumber(stats.losses, 0)}L
+                                </Typography>
+                              ) : (
+                                <Typography variant="caption" color="text.secondary" noWrap>
+                                  {safeNumber(stats.wins, 0)}W • {safeNumber(stats.losses, 0)}L
+                                </Typography>
+                              )}
                             </Box>
                           </Box>
                         </TableCell>
-                        {tab === 0 ? <TableCell>{gameLabel}</TableCell> : null}
-                        <TableCell>Nivel {safeNumber(stats.level, 1)}</TableCell>
-                        <TableCell>{safeNumber(stats.points, 0).toFixed(2)}</TableCell>
-                        <TableCell>
-                          {safeNumber(stats.wins, 0)}-{safeNumber(stats.losses, 0)}
-                        </TableCell>
-                        {tab !== 0 ? <TableCell>{safeNumber(stats.tournaments, 0)}</TableCell> : null}
+                        {!isMobile && tab === 0 ? <TableCell>{gameLabel}</TableCell> : null}
+                        {!isMobile ? <TableCell>Nivel {safeNumber(stats.level, 1)}</TableCell> : null}
+                        {!isMobile ? <TableCell>{safeNumber(stats.points, 0).toFixed(2)}</TableCell> : null}
+                        {!isMobile ? (
+                          <TableCell>
+                            {safeNumber(stats.wins, 0)}-{safeNumber(stats.losses, 0)}
+                          </TableCell>
+                        ) : null}
+                        {!isMobile && tab !== 0 ? <TableCell>{safeNumber(stats.tournaments, 0)}</TableCell> : null}
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                             <DotIcon

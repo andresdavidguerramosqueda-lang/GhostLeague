@@ -21,6 +21,9 @@ import {
   Radio,
   FormControlLabel,
   IconButton,
+  Chip,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -36,6 +39,8 @@ import TournamentResultsTab from '../components/tournaments/TournamentResultsTab
 import TournamentAsideCard from '../components/tournaments/TournamentAsideCard';
 
 const TournamentDetailPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser, isAdmin, refreshUser } = useAuth();
@@ -963,6 +968,7 @@ const TournamentDetailPage = () => {
               display: 'flex',
               gap: 2,
               alignItems: 'flex-start',
+              flexDirection: { xs: 'column', sm: 'row' },
             }}
           >
             {/* Sidebar de secciones */}
@@ -970,21 +976,23 @@ const TournamentDetailPage = () => {
               elevation={0}
               sx={{
                 p: 1,
-                minWidth: 180,
-                maxWidth: 220,
+                minWidth: { xs: 'auto', sm: 180 },
+                maxWidth: { xs: '100%', sm: 220 },
                 bgcolor: 'background.paper',
-                position: 'sticky',
-                top: 88,
-                alignSelf: 'flex-start',
+                position: { xs: 'static', sm: 'sticky' },
+                top: { xs: 'auto', sm: 88 },
+                alignSelf: { xs: 'stretch', sm: 'flex-start' },
               }}
             >
               <Tabs
-                orientation="vertical"
+                orientation={isMobile ? 'horizontal' : 'vertical'}
                 value={tabValue}
                 onChange={handleTabChange}
                 textColor="primary"
                 indicatorColor="primary"
-                variant="fullWidth"
+                variant={isMobile ? 'scrollable' : 'fullWidth'}
+                scrollButtons={isMobile ? 'auto' : false}
+                allowScrollButtonsMobile
               >
                 <Tab label="Información" />
                 <Tab label="Participantes" />
@@ -997,8 +1005,9 @@ const TournamentDetailPage = () => {
               <Box
                 sx={{
                   display: 'flex',
-                  justifyContent: 'flex-end',
+                  justifyContent: { xs: 'flex-start', sm: 'flex-end' },
                   alignItems: 'center',
+                  flexWrap: 'wrap',
                   mb: 2,
                   gap: 1,
                 }}

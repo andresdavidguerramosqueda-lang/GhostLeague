@@ -16,6 +16,7 @@ const router = express.Router();
 const { auth } = require('../middleware/auth');
 
 const isCloudinaryConfigured = () => {
+  if (process.env.CLOUDINARY_URL) return true;
   return !!(
     process.env.CLOUDINARY_CLOUD_NAME &&
     process.env.CLOUDINARY_API_KEY &&
@@ -25,6 +26,21 @@ const isCloudinaryConfigured = () => {
 
 const configureCloudinary = () => {
   if (!isCloudinaryConfigured()) return;
+
+  if (process.env.CLOUDINARY_URL) {
+    try {
+      const parsed = new URL(process.env.CLOUDINARY_URL);
+      cloudinary.config({
+        cloud_name: parsed.hostname,
+        api_key: decodeURIComponent(parsed.username || ''),
+        api_secret: decodeURIComponent(parsed.password || ''),
+      });
+      return;
+    } catch (e) {
+      // fallback below
+    }
+  }
+
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -562,6 +578,17 @@ router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
         // ignore
       }
     } else {
+      if ((process.env.NODE_ENV || '').toLowerCase() === 'production') {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {
+          // ignore
+        }
+        return res.status(503).json({
+          message: 'Uploads de avatar no configurados. Configura Cloudinary en el servidor (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET).'
+        });
+      }
+
       const publicPath = `/uploads/avatars/${req.file.filename}`;
       const forwardedProto = (req.headers['x-forwarded-proto'] || '').toString().split(',')[0].trim();
       const protocol = forwardedProto || req.protocol;
@@ -630,6 +657,17 @@ router.post('/banner', auth, uploadBanner.single('banner'), async (req, res) => 
         // ignore
       }
     } else {
+      if ((process.env.NODE_ENV || '').toLowerCase() === 'production') {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {
+          // ignore
+        }
+        return res.status(503).json({
+          message: 'Uploads de banner no configurados. Configura Cloudinary en el servidor (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET).'
+        });
+      }
+
       const publicPath = `/uploads/banners/${req.file.filename}`;
       const forwardedProto = (req.headers['x-forwarded-proto'] || '').toString().split(',')[0].trim();
       const protocol = forwardedProto || req.protocol;
